@@ -1,1 +1,2 @@
 2024-06-08T11:23:13  fix(output): short-circuit on first critical
+2024-06-25T18:40:20  perf(format): add --fail-on threshold handling
