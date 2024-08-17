@@ -2,3 +2,4 @@
 2024-06-25T18:40:20  perf(format): add --fail-on threshold handling
 2024-07-12T13:57:27  perf: micro-optimization
 2024-07-31T08:14:34  build(report): trim whitespace in parsed fields
+2024-08-17T15:31:41  docs(scan): add a JSON schema for output
