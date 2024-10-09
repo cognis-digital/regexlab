@@ -5,3 +5,4 @@
 2024-08-17T15:31:41  docs(scan): add a JSON schema for output
 2024-09-04T10:48:48  chore: one does not simply skip CI
 2024-09-22T17:05:55  style(engine): bump the dev toolchain
+2024-10-09T12:22:02  fix(mcp): add a --quiet mode
