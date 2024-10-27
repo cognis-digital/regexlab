@@ -6,3 +6,4 @@
 2024-09-04T10:48:48  chore: one does not simply skip CI
 2024-09-22T17:05:55  style(engine): bump the dev toolchain
 2024-10-09T12:22:02  fix(mcp): add a --quiet mode
+2024-10-27T19:39:09  fix(scan): add a regression fixture
