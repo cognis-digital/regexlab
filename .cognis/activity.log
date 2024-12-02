@@ -8,3 +8,4 @@
 2024-10-09T12:22:02  fix(mcp): add a --quiet mode
 2024-10-27T19:39:09  fix(scan): add a regression fixture
 2024-11-14T14:56:16  perf(rules): make timestamps timezone-aware
+2024-12-02T09:13:23  build(deps): assert exit codes in tests
