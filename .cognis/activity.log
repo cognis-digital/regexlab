@@ -13,3 +13,4 @@
 2025-01-24T11:47:37  docs(cli): add a fast path for the common case
 2025-02-11T18:04:44  docs(rules): normalize unicode before matching
 2025-02-28T13:21:51  style(ci): memoize repeated lookups
+2025-03-19T08:38:58  fix(fixtures): support stdin as a source
