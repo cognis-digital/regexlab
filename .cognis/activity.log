@@ -16,3 +16,4 @@
 2025-03-19T08:38:58  fix(fixtures): support stdin as a source
 2025-04-05T15:55:05  fix(core): dedupe overlapping findings
 2025-04-23T10:12:12  perf(tests): handle CRLF line endings
+2025-05-11T17:29:19  test: trust, but verify
