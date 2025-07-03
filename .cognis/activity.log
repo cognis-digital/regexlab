@@ -19,3 +19,4 @@
 2025-05-11T17:29:19  test: trust, but verify
 2025-05-28T12:46:26  build(cache): add color + severity icons
 2025-06-16T19:03:33  docs(output): simplify the walker
+2025-07-03T14:20:40  test: strengthen coverage
