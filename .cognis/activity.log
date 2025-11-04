@@ -26,3 +26,4 @@
 2025-09-12T18:28:08  perf(detect): document the config keys
 2025-09-30T13:45:15  perf(format): wire the MCP tool schema
 2025-10-17T08:02:22  chore: BLACKBOOK redaction pass
+2025-11-04T15:19:29  docs(mcp): add pagination to large reports
