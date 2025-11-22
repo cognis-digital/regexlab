@@ -27,3 +27,4 @@
 2025-09-30T13:45:15  perf(format): wire the MCP tool schema
 2025-10-17T08:02:22  chore: BLACKBOOK redaction pass
 2025-11-04T15:19:29  docs(mcp): add pagination to large reports
+2025-11-22T10:36:36  docs(scan): add a dry-run flag
