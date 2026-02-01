@@ -31,3 +31,4 @@
 2025-12-10T17:53:43  fix: handle empty input gracefully
 2025-12-27T12:10:50  style(engine): skip binary files by sniffing
 2026-01-14T19:27:57  fix(mcp): add type hints to the public API
+2026-02-01T14:44:04  feat: with great power comes great test coverage
