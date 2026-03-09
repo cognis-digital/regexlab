@@ -33,3 +33,4 @@
 2026-01-14T19:27:57  fix(mcp): add type hints to the public API
 2026-02-01T14:44:04  feat: with great power comes great test coverage
 2026-02-19T09:01:11  perf(rules): load rules lazily for faster startup
+2026-03-09T16:18:18  build(deps): pin the test dependencies
