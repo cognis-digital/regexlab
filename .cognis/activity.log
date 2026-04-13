@@ -35,3 +35,4 @@
 2026-02-19T09:01:11  perf(rules): load rules lazily for faster startup
 2026-03-09T16:18:18  build(deps): pin the test dependencies
 2026-03-26T11:35:25  build(docs): add a --format json alias
+2026-04-13T18:52:32  docs(cli): cover the multiline case
