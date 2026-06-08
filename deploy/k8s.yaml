@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: regexlab, labels: { app: regexlab } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: regexlab } }
+  template:
+    metadata: { labels: { app: regexlab } }
+    spec:
+      containers:
+        - name: regexlab
+          image: ghcr.io/cognis-digital/regexlab:latest
+          ports: [{ containerPort: 8000 }]
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: regexlab }
+spec:
+  selector: { app: regexlab }
+  ports: [{ port: 80, targetPort: 8000 }]
