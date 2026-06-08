@@ -1,38 +1,310 @@
-"""REGEXLAB command-line interface."""
+"""REGEXLAB command-line interface.
+
+Subcommands:
+  explain   token-by-token plain-English breakdown of a regex
+  test      run a regex against input, report matches + ReDoS risk
+  bench     time a regex over many iterations + ReDoS risk
+  scan      scan input with the built-in security pattern library
+  patterns  list the built-in security patterns
+
+Output: --format {table,json,html}. Non-zero exit on findings/failure.
+"""
 from __future__ import annotations
-import argparse, sys
-from regexlab.core import scan, to_json, TOOL_NAME, TOOL_VERSION
 
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="regexlab", description="REGEXLAB — Cognis Neural Suite")
-    ap.add_argument("--version", action="version", version=f"{TOOL_NAME} {TOOL_VERSION}")
-    sub = ap.add_subparsers(dest="cmd")
-    s = sub.add_parser("scan", help="scan a file or directory")
-    s.add_argument("target")
-    s.add_argument("--format", choices=["table", "json"], default="table")
-    s.add_argument("--fail-on", choices=["critical", "high", "medium", "low"], default=None)
-    sub.add_parser("mcp", help="run as an MCP server")
-    args = ap.parse_args(argv)
+import argparse
+import html
+import json
+import sys
+from dataclasses import asdict
+from typing import List, Optional
 
-    if args.cmd == "mcp":
-        from regexlab.mcp_server import serve
-        return serve()
-    if args.cmd == "scan":
-        res = scan(args.target)
-        if args.format == "json":
-            print(to_json(res))
-        else:
-            if not res.findings:
-                print(f"[{TOOL_NAME}] no findings in {args.target}")
-            for f in res.findings:
-                print(f"  [{f.severity.upper():8}] {f.id}  {f.title}  ({f.where})")
-            print(f"\n{len(res.findings)} findings · risk score {res.score} · {res.elapsed_ms}ms")
-        order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
-        if args.fail_on and any(order.get(f.severity, 0) >= order[args.fail_on] for f in res.findings):
-            return 2
-        return 0
-    ap.print_help()
+from .core import (
+    TOOL_NAME, TOOL_VERSION, SECURITY_PATTERNS,
+    explain_pattern, test_pattern, benchmark_pattern, scan_text,
+    detect_redos_risk, Match,
+)
+
+SEV_COLOR = {
+    "info": "#6c757d", "low": "#0d6efd", "medium": "#fd7e14",
+    "high": "#dc3545", "critical": "#7b001c", "none": "#198754",
+}
+SEV_RANK = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
+
+
+def _read_subject(args) -> str:
+    if getattr(args, "input", None):
+        with open(args.input, "r", encoding="utf-8", errors="replace") as fh:
+            return fh.read()
+    if getattr(args, "text", None) is not None:
+        return args.text
+    if not sys.stdin.isatty():
+        return sys.stdin.read()
+    return ""
+
+
+def _emit(text: str, out: Optional[str]) -> None:
+    if out:
+        with open(out, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        print(f"wrote {out}", file=sys.stderr)
+    else:
+        print(text)
+
+
+# ---------------------------------------------------------------------------
+# HTML report (the shareable UI).
+# ---------------------------------------------------------------------------
+def _html_report(title: str, summary_rows: List[tuple], detail_html: str) -> str:
+    esc = html.escape
+    rows = "".join(
+        f"<tr><td>{esc(str(k))}</td><td>{esc(str(v))}</td></tr>"
+        for k, v in summary_rows
+    )
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(title)} - {TOOL_NAME}</title>
+<style>
+  :root {{ color-scheme: light dark; }}
+  body {{ font:15px/1.5 system-ui,Segoe UI,Arial,sans-serif; margin:0; background:#0f1115; color:#e8e8ea; }}
+  header {{ background:#161a22; padding:18px 28px; border-bottom:1px solid #2a2f3a; }}
+  header h1 {{ margin:0; font-size:20px; }}
+  header .v {{ color:#8a92a6; font-size:13px; }}
+  main {{ padding:24px 28px; max-width:1100px; margin:0 auto; }}
+  h2 {{ font-size:16px; border-bottom:1px solid #2a2f3a; padding-bottom:6px; margin-top:28px; }}
+  table {{ border-collapse:collapse; width:100%; margin:10px 0; }}
+  th,td {{ text-align:left; padding:7px 10px; border-bottom:1px solid #242a36; font-size:14px; vertical-align:top; }}
+  th {{ color:#9aa3b5; font-weight:600; }}
+  code {{ background:#1b2030; padding:1px 5px; border-radius:4px; font-family:Consolas,Menlo,monospace; }}
+  .pill {{ display:inline-block; padding:1px 9px; border-radius:999px; color:#fff; font-size:12px; font-weight:600; }}
+  .mono {{ font-family:Consolas,Menlo,monospace; white-space:pre-wrap; word-break:break-all; }}
+  footer {{ color:#6c7488; padding:18px 28px; font-size:12px; }}
+</style></head><body>
+<header><h1>{esc(TOOL_NAME)} - {esc(title)}</h1>
+<div class="v">version {TOOL_VERSION} - defensive regex analysis - regex without footguns</div></header>
+<main>
+<h2>Summary</h2><table><tbody>{rows}</tbody></table>
+{detail_html}
+</main>
+<footer>Generated by {esc(TOOL_NAME)} {TOOL_VERSION}. Advisory only; ReDoS detection is heuristic.</footer>
+</body></html>"""
+
+
+def _pill(sev: str) -> str:
+    c = SEV_COLOR.get(sev, "#6c757d")
+    return f'<span class="pill" style="background:{c}">{html.escape(sev)}</span>'
+
+
+# ---------------------------------------------------------------------------
+# Subcommand handlers. Each returns (exit_code, text_output).
+# ---------------------------------------------------------------------------
+def cmd_explain(args) -> int:
+    parts = explain_pattern(args.regex)
+    risk, notes = detect_redos_risk(args.regex)
+    if args.format == "json":
+        _emit(json.dumps({
+            "regex": args.regex,
+            "segments": [{"token": t, "explanation": e} for t, e in parts],
+            "redos_risk": risk, "redos_notes": notes,
+        }, indent=2), args.output)
+    elif args.format == "html":
+        rows = [("regex", args.regex), ("segments", len(parts)),
+                ("redos risk", risk)]
+        body = "<h2>Breakdown</h2><table><thead><tr><th>Token</th><th>Meaning</th></tr></thead><tbody>"
+        for t, e in parts:
+            body += f"<tr><td><code>{html.escape(t)}</code></td><td>{html.escape(e)}</td></tr>"
+        body += "</tbody></table><h2>ReDoS notes</h2><ul>"
+        body += "".join(f"<li>{html.escape(n)}</li>" for n in notes) + "</ul>"
+        _emit(_html_report("explain", rows, body), args.output)
+    else:
+        lines = [f"regex: {args.regex}", f"redos risk: {risk}", ""]
+        for t, e in parts:
+            lines.append(f"  {t:<8} {e}")
+        for n in notes:
+            lines.append(f"  [redos] {n}")
+        _emit("\n".join(lines), args.output)
     return 0
+
+
+def cmd_test(args) -> int:
+    subject = _read_subject(args)
+    res = test_pattern(args.regex, subject, args.flags, args.max_matches)
+    if not res.valid:
+        _print_err(f"invalid regex: {res.error}")
+        return 2
+    if args.format == "json":
+        d = asdict(res)
+        _emit(json.dumps(d, indent=2), args.output)
+    elif args.format == "html":
+        rows = [("regex", res.regex), ("flags", ",".join(res.flags) or "-"),
+                ("matches", res.match_count), ("redos risk", res.redos_risk)]
+        body = "<h2>Matches</h2><table><thead><tr><th>#</th><th>Line</th><th>Span</th><th>Text</th></tr></thead><tbody>"
+        for idx, m in enumerate(res.matches, 1):
+            body += (f"<tr><td>{idx}</td><td>{m.line}</td><td>{m.start}-{m.end}</td>"
+                     f"<td class='mono'>{html.escape(m.text)}</td></tr>")
+        body += "</tbody></table><h2>ReDoS notes</h2><ul>"
+        body += "".join(f"<li>{html.escape(n)}</li>" for n in res.redos_notes) + "</ul>"
+        _emit(_html_report("test", rows, body), args.output)
+    else:
+        lines = [f"regex: {res.regex}  flags: {','.join(res.flags) or '-'}",
+                 f"matches: {res.match_count}  redos risk: {res.redos_risk}", ""]
+        for idx, m in enumerate(res.matches, 1):
+            lines.append(f"  #{idx} L{m.line} [{m.start}:{m.end}] {m.text!r}")
+        for n in res.redos_notes:
+            lines.append(f"  [redos] {n}")
+        _emit("\n".join(lines), args.output)
+    # Non-zero if no matches (a failed expectation) or high ReDoS risk.
+    if res.match_count == 0:
+        return 1
+    if res.redos_risk == "high":
+        return 1
+    return 0
+
+
+def cmd_bench(args) -> int:
+    subject = _read_subject(args)
+    res = benchmark_pattern(args.regex, subject, args.flags, args.iterations)
+    if not res.valid:
+        _print_err(f"invalid regex: {res.error}")
+        return 2
+    if args.format == "json":
+        _emit(json.dumps(asdict(res), indent=2), args.output)
+    elif args.format == "html":
+        rows = [("regex", res.regex), ("iterations", res.iterations),
+                ("total seconds", f"{res.total_seconds:.4f}"),
+                ("us / run", f"{res.per_match_us:.2f}"),
+                ("matches / run", res.match_count), ("redos risk", res.redos_risk)]
+        body = "<h2>ReDoS notes</h2><ul>" + \
+            "".join(f"<li>{html.escape(n)}</li>" for n in res.redos_notes) + "</ul>"
+        _emit(_html_report("bench", rows, body), args.output)
+    else:
+        lines = [f"regex: {res.regex}",
+                 f"iterations: {res.iterations}  total: {res.total_seconds:.4f}s",
+                 f"per run: {res.per_match_us:.2f} us  matches/run: {res.match_count}",
+                 f"redos risk: {res.redos_risk}"]
+        for n in res.redos_notes:
+            lines.append(f"  [redos] {n}")
+        _emit("\n".join(lines), args.output)
+    return 1 if res.redos_risk == "high" else 0
+
+
+def cmd_scan(args) -> int:
+    subject = _read_subject(args)
+    matches = scan_text(subject, min_severity=args.min_severity)
+    matches.sort(key=lambda m: (-SEV_RANK.get(m.severity, 0), m.line))
+    counts = {}
+    for m in matches:
+        counts[m.severity] = counts.get(m.severity, 0) + 1
+    if args.format == "json":
+        _emit(json.dumps({
+            "findings": len(matches),
+            "by_severity": counts,
+            "matches": [asdict(m) for m in matches],
+        }, indent=2), args.output)
+    elif args.format == "html":
+        rows = [("total findings", len(matches))] + \
+               [(s, counts.get(s, 0)) for s in ("critical", "high", "medium", "low", "info")]
+        body = "<h2>Findings</h2><table><thead><tr><th>Severity</th><th>Pattern</th><th>Line</th><th>Match</th></tr></thead><tbody>"
+        for m in matches:
+            body += (f"<tr><td>{_pill(m.severity)}</td><td><code>{html.escape(m.pattern)}</code></td>"
+                     f"<td>{m.line}</td><td class='mono'>{html.escape(_redact(m.text))}</td></tr>")
+        body += "</tbody></table>"
+        _emit(_html_report("scan", rows, body), args.output)
+    else:
+        lines = [f"findings: {len(matches)}  " +
+                 "  ".join(f"{k}={v}" for k, v in sorted(counts.items())), ""]
+        for m in matches:
+            lines.append(f"  [{m.severity:<8}] {m.pattern:<24} L{m.line:<5} {_redact(m.text)}")
+        _emit("\n".join(lines), args.output)
+    return 1 if matches else 0
+
+
+def cmd_patterns(args) -> int:
+    if args.format == "json":
+        _emit(json.dumps([asdict(p) for p in SECURITY_PATTERNS], indent=2), args.output)
+    elif args.format == "html":
+        rows = [("patterns", len(SECURITY_PATTERNS))]
+        body = "<h2>Pattern library</h2><table><thead><tr><th>Severity</th><th>Name</th><th>Description</th><th>Regex</th></tr></thead><tbody>"
+        for p in SECURITY_PATTERNS:
+            body += (f"<tr><td>{_pill(p.severity)}</td><td><code>{html.escape(p.name)}</code></td>"
+                     f"<td>{html.escape(p.description)}</td><td class='mono'>{html.escape(p.regex)}</td></tr>")
+        body += "</tbody></table>"
+        _emit(_html_report("patterns", rows, body), args.output)
+    else:
+        lines = []
+        for p in SECURITY_PATTERNS:
+            lines.append(f"  [{p.severity:<8}] {p.name:<24} {p.description}")
+        _emit("\n".join(lines), args.output)
+    return 0
+
+
+def _redact(text: str) -> str:
+    """Mask the middle of a finding so reports don't leak full secrets."""
+    if len(text) <= 8:
+        return text[0] + "*" * (len(text) - 1) if text else text
+    keep = 3
+    return f"{text[:keep]}{'*' * (len(text) - 2 * keep)}{text[-keep:]}"
+
+
+def _print_err(msg: str) -> None:
+    print(f"{TOOL_NAME}: error: {msg}", file=sys.stderr)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog=TOOL_NAME,
+        description="Test, explain & benchmark regexes + a library of security patterns. regex without footguns.",
+    )
+    p.add_argument("--version", action="version",
+                   version=f"{TOOL_NAME} {TOOL_VERSION}")
+    sub = p.add_subparsers(dest="command", required=True)
+
+    def add_io(sp, need_subject=True):
+        sp.add_argument("--format", choices=["table", "json", "html"], default="table")
+        sp.add_argument("-o", "--output", help="write report to file")
+        if need_subject:
+            sp.add_argument("-i", "--input", help="read subject from file")
+            sp.add_argument("-t", "--text", help="subject text inline")
+
+    sp = sub.add_parser("explain", help="break a regex into plain English")
+    sp.add_argument("regex")
+    add_io(sp, need_subject=False)
+    sp.set_defaults(func=cmd_explain)
+
+    sp = sub.add_parser("test", help="run a regex against input")
+    sp.add_argument("regex")
+    sp.add_argument("--flags", default="", help="regex flags, e.g. ims")
+    sp.add_argument("--max-matches", type=int, default=1000)
+    add_io(sp)
+    sp.set_defaults(func=cmd_test)
+
+    sp = sub.add_parser("bench", help="benchmark a regex")
+    sp.add_argument("regex")
+    sp.add_argument("--flags", default="")
+    sp.add_argument("--iterations", type=int, default=1000)
+    add_io(sp)
+    sp.set_defaults(func=cmd_bench)
+
+    sp = sub.add_parser("scan", help="scan input with the security pattern library")
+    sp.add_argument("--min-severity",
+                    choices=["info", "low", "medium", "high", "critical"], default="info")
+    add_io(sp)
+    sp.set_defaults(func=cmd_scan)
+
+    sp = sub.add_parser("patterns", help="list built-in security patterns")
+    add_io(sp, need_subject=False)
+    sp.set_defaults(func=cmd_patterns)
+    return p
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        return args.func(args)
+    except (ValueError, OSError) as exc:
+        _print_err(str(exc))
+        return 2
+
 
 if __name__ == "__main__":
     sys.exit(main())

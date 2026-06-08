@@ -1,0 +1,12 @@
+2026-06-08 09:31:02 INFO  boot  starting service api-gateway v2.4.1
+2026-06-08 09:31:02 INFO  conf  region=us-east-1 nodes=3
+2026-06-08 09:31:03 DEBUG auth  loaded credentials for deploy bot
+2026-06-08 09:31:03 WARN  conf  AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE found in env
+2026-06-08 09:31:03 DEBUG http  GET /health from 10.4.12.88 -> 200
+2026-06-08 09:31:04 INFO  user  signup chris@greenwayenergycapital.com confirmed
+2026-06-08 09:31:04 DEBUG conf  api_key = sk_live_EXAMPLEKEY01234
+2026-06-08 09:31:05 INFO  sess  issued token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N
+2026-06-08 09:31:05 DEBUG http  POST /pay card=4111111111111111 amount=42.00 from 203.0.113.7
+2026-06-08 09:31:06 INFO  git   pushed with token ghp_EXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLE0
+2026-06-08 09:31:06 DEBUG conf  password=hunter2hunter2hunter2 (rotate me)
+2026-06-08 09:31:07 INFO  done  service ready on 0.0.0.0:8080
