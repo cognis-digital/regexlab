@@ -36,9 +36,14 @@ Test, explain & benchmark regexes + a library of security patterns — without s
 <a name="features"></a>
 ## Features
 
-- ✅ Todo
-- ✅ Fixme
-- ✅ Xxx
+- ✅ Parse Flags
+- ✅ Flags To List
+- ✅ Detect Redos Risk
+- ✅ Explain Pattern
+- ✅ Test Pattern
+- ✅ Benchmark Pattern
+- ✅ Scan Text
+- ✅ Match To Dict
 - ✅ Runs on Linux/macOS/Windows · Docker · devcontainer
 - ✅ Ports in Python, JavaScript, Go, and Rust (`ports/`)
 
