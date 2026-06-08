@@ -1,0 +1,10 @@
+{
+  "name": "@cognis/regexlab",
+  "version": "0.2.0",
+  "description": "JavaScript port of regexlab (Cognis Neural Suite)",
+  "bin": {
+    "regexlab": "index.js"
+  },
+  "license": "LicenseRef-COCL-1.0",
+  "type": "module"
+}
