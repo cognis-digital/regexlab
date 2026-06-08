@@ -1,33 +1,11 @@
-"""REGEXLAB - test, explain & benchmark regexes + a library of security patterns.
-
-regex without footguns. Defensive analysis/triage only.
-"""
-from .core import (
-    TOOL_NAME,
-    TOOL_VERSION,
-    SECURITY_PATTERNS,
-    SecurityPattern,
-    Match,
-    TestResult,
-    BenchResult,
-    explain_pattern,
-    test_pattern,
-    benchmark_pattern,
-    scan_text,
-    detect_redos_risk,
-)
-
-__all__ = [
-    "TOOL_NAME",
-    "TOOL_VERSION",
-    "SECURITY_PATTERNS",
-    "SecurityPattern",
-    "Match",
-    "TestResult",
-    "BenchResult",
-    "explain_pattern",
-    "test_pattern",
-    "benchmark_pattern",
-    "scan_text",
-    "detect_redos_risk",
-]
+"""regexlab — part of the Cognis Neural Suite."""
+try:  # re-export the tool's public API + identity from core
+    from regexlab.core import *  # noqa: F401,F403
+except Exception:  # pragma: no cover
+    pass
+try:
+    from regexlab.core import TOOL_NAME, TOOL_VERSION
+except Exception:  # pragma: no cover
+    TOOL_NAME = "regexlab"
+    TOOL_VERSION = "0.1.0"
+__version__ = TOOL_VERSION
