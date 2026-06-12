@@ -16,7 +16,7 @@
 </div>
 
 ```bash
-pip install cognis-regexlab
+pip install "git+https://github.com/cognis-digital/regexlab.git"
 regexlab scan .            # → prioritized findings in seconds
 ```
 
@@ -53,7 +53,7 @@ Test, explain & benchmark regexes + a library of security patterns — without s
 ## Quick start
 
 ```bash
-pip install cognis-regexlab
+pip install "git+https://github.com/cognis-digital/regexlab.git"
 regexlab --version
 regexlab scan .                       # scan current project
 regexlab scan . --format json         # machine-readable
