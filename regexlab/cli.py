@@ -21,7 +21,7 @@ from typing import List, Optional
 from .core import (
     TOOL_NAME, TOOL_VERSION, SECURITY_PATTERNS,
     explain_pattern, test_pattern, benchmark_pattern, scan_text,
-    detect_redos_risk, Match,
+    detect_redos_risk,
 )
 
 SEV_COLOR = {

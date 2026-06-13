@@ -9,9 +9,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from regexlab import (  # noqa: E402
     TOOL_NAME, TOOL_VERSION, SECURITY_PATTERNS,
-    explain_pattern, test_pattern, benchmark_pattern, scan_text,
+    explain_pattern, benchmark_pattern, scan_text,
     detect_redos_risk,
 )
+from regexlab import test_pattern as _test_pattern  # noqa: E402 — alias avoids pytest collection
 from regexlab.cli import main, _redact  # noqa: E402
 
 
@@ -29,14 +30,14 @@ def test_explain_basic():
 
 
 def test_test_pattern_matches():
-    res = test_pattern(r"\d+", "abc 123 def 456")
+    res = _test_pattern(r"\d+", "abc 123 def 456")
     assert res.valid
     assert res.match_count == 2
     assert res.matches[0].text == "123"
 
 
 def test_test_pattern_invalid():
-    res = test_pattern("(unclosed", "x")
+    res = _test_pattern("(unclosed", "x")
     assert not res.valid
     assert res.error
 

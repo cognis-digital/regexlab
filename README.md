@@ -16,9 +16,15 @@
 </div>
 
 ```bash
-pip install cognis-regexlab
+pip install "git+https://github.com/cognis-digital/regexlab.git"
 regexlab scan .            # → prioritized findings in seconds
 ```
+
+<!-- cognis:layman:start -->
+## What is this?
+
+Regexlab is a command-line tool that helps you work with regular expressions — the search patterns used by developers to find and match text. You give it a pattern and some text, and it tells you exactly what the pattern matches, explains each piece in plain English, and warns you if the pattern is written in a way that could make your program run very slowly. It also includes a built-in library of patterns that scan your files for exposed secrets like API keys, passwords, and private keys. It is for developers and security engineers who want to test, debug, and audit regular expressions without setting up any extra infrastructure.
+<!-- cognis:layman:end -->
 
 ## Contents
 
@@ -50,10 +56,56 @@ Test, explain & benchmark regexes + a library of security patterns — without s
 <div align="right"><a href="#top">↑ back to top</a></div>
 
 <a name="quick-start"></a>
+<!-- cognis:domains:start -->
+## Domains
+
+**Primary domain:** Cyber & Security  ·  **JTF MERIDIAN division:** NULLBYTE · SPECTER
+
+**Topics:** `cognis` `security` `infosec` `cybersecurity` `blue-team`
+
+Part of the **Cognis Neural Suite** — 300+ source-available tools organized across 12 domains under the JTF MERIDIAN command structure. See the [suite on GitHub](https://github.com/cognis-digital) and [jtf-meridian](https://github.com/cognis-digital/jtf-meridian) for how the pieces fit together.
+<!-- cognis:domains:end -->
+
+<!-- cognis:install:start -->
+## Install
+
+`regexlab` is source-available (not published to PyPI) — every method below installs
+straight from GitHub. Pick whichever you prefer; the one-line scripts auto-detect
+the best tool available on your machine.
+
+**One-liner (Linux / macOS):**
+```sh
+curl -fsSL https://raw.githubusercontent.com/cognis-digital/regexlab/HEAD/install.sh | sh
+```
+
+**One-liner (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/cognis-digital/regexlab/HEAD/install.ps1 | iex
+```
+
+**Or install manually — any one of:**
+```sh
+pipx install "git+https://github.com/cognis-digital/regexlab.git"     # isolated (recommended)
+uv tool install "git+https://github.com/cognis-digital/regexlab.git"  # uv
+pip install "git+https://github.com/cognis-digital/regexlab.git"      # pip
+```
+
+**From source:**
+```sh
+git clone https://github.com/cognis-digital/regexlab.git
+cd regexlab && pip install .
+```
+
+Then run:
+```sh
+regexlab --help
+```
+<!-- cognis:install:end -->
+
 ## Quick start
 
 ```bash
-pip install cognis-regexlab
+pip install "git+https://github.com/cognis-digital/regexlab.git"
 regexlab --version
 regexlab scan .                       # scan current project
 regexlab scan . --format json         # machine-readable

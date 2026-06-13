@@ -32,3 +32,6 @@ regexlab = "regexlab.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["regexlab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
