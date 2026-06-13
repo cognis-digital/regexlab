@@ -20,6 +20,45 @@ pip install cognis-regexlab
 regexlab scan .            # → prioritized findings in seconds
 ```
 
+## Usage — step by step
+
+1. **Install** (Python 3.9+):
+
+   ```bash
+   pip install regexlab            # or: pipx install regexlab
+   ```
+
+2. **Explain a pattern** in plain English:
+
+   ```bash
+   regexlab explain '^(\d{4})-(\d{2})-(\d{2})$'
+   ```
+
+3. **Test it against input.** Pass the subject inline with `-t` (or `-i` to read from a file), and set flags with `--flags`:
+
+   ```bash
+   regexlab test '\bERROR\b' -t "2026 ERROR boot" --flags i
+   ```
+
+4. **Benchmark** a regex to catch catastrophic backtracking:
+
+   ```bash
+   regexlab bench '(a+)+$' --iterations 1000
+   ```
+
+5. **Scan with the security pattern library** and read the result. Use `--min-severity` to filter and `--format json` for machine-readable output:
+
+   ```bash
+   regexlab scan -i app.log --min-severity high --format json -o scan.json
+   ```
+
+6. **List built-in patterns** and gate in CI:
+
+   ```bash
+   regexlab patterns
+   regexlab scan -i app.log --min-severity high   # non-zero exit signals findings
+   ```
+
 ## Contents
 
 - [Why regexlab?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
