@@ -34,3 +34,6 @@ regexlab = "regexlab.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["regexlab"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
