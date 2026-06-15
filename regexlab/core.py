@@ -305,6 +305,11 @@ def test_pattern(pattern: str, subject: str, flag_str: str = "",
                       len(matches), matches, risk, notes)
 
 
+# This is public API ("test a pattern"), not a pytest test - stop pytest collecting it
+# when it's imported into a test module.
+test_pattern.__test__ = False
+
+
 def benchmark_pattern(pattern: str, subject: str, flag_str: str = "",
                       iterations: int = 1000) -> BenchResult:
     flag_bits = parse_flags(flag_str)
