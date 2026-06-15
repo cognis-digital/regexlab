@@ -1,6 +1,10 @@
-"""REGEXLAB MCP server — exposes scan() as an MCP tool for Cognis.Studio."""
+"""REGEXLAB MCP server — exposes scan_text() as an MCP tool for Cognis.Studio."""
 from __future__ import annotations
-from regexlab.core import scan, to_json
+import json
+import sys
+from regexlab.core import scan_text
+from dataclasses import asdict
+
 
 def serve() -> int:
     """Start an MCP stdio server. Requires the optional 'mcp' extra:
@@ -8,15 +12,24 @@ def serve() -> int:
     """
     try:
         from mcp.server.fastmcp import FastMCP
-    except Exception:
-        print("Install the MCP extra: pip install 'cognis-regexlab[mcp]'")
+    except ImportError:
+        print(
+            "Install the MCP extra: pip install 'cognis-regexlab[mcp]'",
+            file=sys.stderr,
+        )
         return 1
     app = FastMCP("regexlab")
 
     @app.tool()
     def regexlab_scan(target: str) -> str:
-        """Test, explain & benchmark regexes + a library of security patterns. Returns JSON findings."""
-        return to_json(scan(target))
+        """Scan text with the built-in security pattern library. Returns JSON findings."""
+        if not isinstance(target, str):
+            return json.dumps({"error": "target must be a string"})
+        matches = scan_text(target)
+        return json.dumps(
+            {"findings": len(matches), "matches": [asdict(m) for m in matches]},
+            indent=2,
+        )
 
     app.run()
     return 0

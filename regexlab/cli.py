@@ -32,8 +32,14 @@ SEV_RANK = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
 def _read_subject(args) -> str:
-    if getattr(args, "input", None):
-        with open(args.input, "r", encoding="utf-8", errors="replace") as fh:
+    path = getattr(args, "input", None)
+    if path:
+        import os
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"input file not found: {path!r}")
+        if not os.path.isfile(path):
+            raise ValueError(f"input path is not a regular file: {path!r}")
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
             return fh.read()
     if getattr(args, "text", None) is not None:
         return args.text
@@ -44,8 +50,11 @@ def _read_subject(args) -> str:
 
 def _emit(text: str, out: Optional[str]) -> None:
     if out:
-        with open(out, "w", encoding="utf-8") as fh:
-            fh.write(text)
+        try:
+            with open(out, "w", encoding="utf-8") as fh:
+                fh.write(text)
+        except OSError as exc:
+            raise OSError(f"cannot write output file {out!r}: {exc}") from exc
         print(f"wrote {out}", file=sys.stderr)
     else:
         print(text)
@@ -126,6 +135,9 @@ def cmd_explain(args) -> int:
 
 
 def cmd_test(args) -> int:
+    if args.max_matches < 1:
+        _print_err("--max-matches must be >= 1")
+        return 2
     subject = _read_subject(args)
     res = test_pattern(args.regex, subject, args.flags, args.max_matches)
     if not res.valid:
@@ -161,6 +173,9 @@ def cmd_test(args) -> int:
 
 
 def cmd_bench(args) -> int:
+    if args.iterations < 1:
+        _print_err("--iterations must be >= 1")
+        return 2
     subject = _read_subject(args)
     res = benchmark_pattern(args.regex, subject, args.flags, args.iterations)
     if not res.valid:
@@ -301,9 +316,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.func(args)
-    except (ValueError, OSError) as exc:
+    except (ValueError, TypeError, OSError) as exc:
         _print_err(str(exc))
         return 2
+    except KeyboardInterrupt:
+        _print_err("interrupted")
+        return 130
 
 
 if __name__ == "__main__":

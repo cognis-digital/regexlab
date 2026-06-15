@@ -287,6 +287,12 @@ def _compile(pattern: str, flag_bits: int) -> Tuple[Optional[re.Pattern], Option
 
 def test_pattern(pattern: str, subject: str, flag_str: str = "",
                  max_matches: int = 1000) -> TestResult:
+    if not isinstance(pattern, str):
+        raise TypeError(f"pattern must be a str, got {type(pattern).__name__}")
+    if not isinstance(subject, str):
+        raise TypeError(f"subject must be a str, got {type(subject).__name__}")
+    if max_matches < 1:
+        raise ValueError(f"max_matches must be >= 1, got {max_matches!r}")
     flag_bits = parse_flags(flag_str)
     risk, notes = detect_redos_risk(pattern)
     rx, err = _compile(pattern, flag_bits)
@@ -307,6 +313,12 @@ def test_pattern(pattern: str, subject: str, flag_str: str = "",
 
 def benchmark_pattern(pattern: str, subject: str, flag_str: str = "",
                       iterations: int = 1000) -> BenchResult:
+    if not isinstance(pattern, str):
+        raise TypeError(f"pattern must be a str, got {type(pattern).__name__}")
+    if not isinstance(subject, str):
+        raise TypeError(f"subject must be a str, got {type(subject).__name__}")
+    if iterations < 1:
+        raise ValueError(f"iterations must be >= 1, got {iterations!r}")
     flag_bits = parse_flags(flag_str)
     risk, notes = detect_redos_risk(pattern)
     rx, err = _compile(pattern, flag_bits)
@@ -317,16 +329,24 @@ def benchmark_pattern(pattern: str, subject: str, flag_str: str = "",
     for _ in range(iterations):
         count = sum(1 for _ in rx.finditer(subject))
     total = time.perf_counter() - start
-    per = (total / iterations) * 1_000_000 if iterations else 0.0
+    per = (total / iterations) * 1_000_000
     return BenchResult(pattern, True, None, iterations, total, per, count, risk, notes)
 
 
 def scan_text(subject: str, patterns: Optional[List[SecurityPattern]] = None,
               min_severity: str = "info", max_matches: int = 5000) -> List[Match]:
     """Scan text for security patterns. Returns Match objects tagged with pattern+severity."""
+    if not isinstance(subject, str):
+        raise TypeError(f"subject must be a str, got {type(subject).__name__}")
+    if max_matches < 1:
+        raise ValueError(f"max_matches must be >= 1, got {max_matches!r}")
     patterns = patterns if patterns is not None else SECURITY_PATTERNS
     order = ["info", "low", "medium", "high", "critical"]
-    floor = order.index(min_severity) if min_severity in order else 0
+    if min_severity not in order:
+        raise ValueError(
+            f"min_severity must be one of {order}, got {min_severity!r}"
+        )
+    floor = order.index(min_severity)
     found: List[Match] = []
     for sp in patterns:
         if order.index(sp.severity) < floor:
