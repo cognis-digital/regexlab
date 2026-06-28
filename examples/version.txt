@@ -1,0 +1,3 @@
+$ regexlab-emit --version
+
+regexlab 1.0.0

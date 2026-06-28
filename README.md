@@ -20,6 +20,64 @@ pip install cognis-regexlab
 regexlab scan .            # → prioritized findings in seconds
 ```
 
+
+<!-- cognis:example:start -->
+## 🔎 Example output
+
+Real, reproducible output from the tool — runs offline:
+
+```console
+$ regexlab-emit --version
+regexlab 1.0.0
+```
+
+```console
+$ regexlab-emit --help
+usage: regexlab [-h] [--version] {explain,test,bench,scan,patterns} ...
+
+Test, explain & benchmark regexes + a library of security patterns. regex
+without footguns.
+
+positional arguments:
+  {explain,test,bench,scan,patterns}
+    explain             break a regex into plain English
+    test                run a regex against input
+    bench               benchmark a regex
+    scan                scan input with the security pattern library
+    patterns            list built-in security patterns
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+```
+
+> Blocks above are real `regexlab` output — reproduce them from a clone.
+
+**Sample result format** _(illustrative values — run on your own data for real findings):_
+
+```
+{
+"findings": [
+    {
+        "id": "123456",
+        "title": "Suspicious Network Activity",
+        "description": "Potential malicious activity detected on network 192.168.1.100",
+        "severity": "medium",
+        "created_at": "2023-02-15T14:30:00Z"
+    },
+    {
+        "id": "789012",
+        "title": "Malware Detection",
+        "description": "Detected malware 'BadBot' on system 'Windows-10-PC'",
+        "severity": "high",
+        "created_at": "2023-02-15T14:31:00Z"
+    }
+]
+}
+```
+
+<!-- cognis:example:end -->
+
 ## Usage — step by step
 
 1. **Install** (Python 3.9+):

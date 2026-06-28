@@ -1,0 +1,18 @@
+$ regexlab-emit --help
+
+usage: regexlab [-h] [--version] {explain,test,bench,scan,patterns} ...
+
+Test, explain & benchmark regexes + a library of security patterns. regex
+without footguns.
+
+positional arguments:
+  {explain,test,bench,scan,patterns}
+    explain             break a regex into plain English
+    test                run a regex against input
+    bench               benchmark a regex
+    scan                scan input with the security pattern library
+    patterns            list built-in security patterns
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
